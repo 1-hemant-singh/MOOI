@@ -1,0 +1,1 @@
+1. user should see only his posts on my posts (rename all posts to my posts) and use home to display all posts form all users
