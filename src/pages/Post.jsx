@@ -39,13 +39,13 @@ export default function Post() {
         navigate("/edit-post/"+slug)
     }
 
+    console.log(appwriteService.getFilePreview(post.featuredImage));
 
 
     return post ? (
         <div className="py-8">
             <Container>
                 <div className="w-full flex justify-center mb-4 relative border rounded-xl p-2">
-                    console.log(appwriteService.getFilePreview(post.featuredImage));
                     
                     <img src={appwriteService.getFilePreview(post.featuredImage)+"&mode=admin"} alt={post.title} 
                 // <img src={"https://fra.cloud.appwrite.io/v1/storage/buckets/684d20d9002280e4678d/files/685269f49077fcc8e074/view?project=684d1d83002a58f7d6f5&mode=admin"} alt={title}
