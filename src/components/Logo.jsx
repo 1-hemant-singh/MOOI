@@ -10,7 +10,7 @@ const home =()=>{
 
   return (
     // <div>Logo</div>
-   <button onClick={home}><img width={80} className='rounded-2xl' src="https://images.pexels.com/photos/1337380/pexels-photo-1337380.jpeg" alt="logo" />
+   <button onClick={home}><img width={width} className='rounded-2xl' src="/favicon.png" alt="MOOI logo" />
  </button>
   )
 }

@@ -15,6 +15,17 @@ function AllPosts() {
         }
     })
     }, [])
+
+    const handleLikeToggle = async (postId) => {
+        try {
+            const updatedPost = await appwriteService.toggleLikePost(postId);
+            setPosts((currentPosts) =>
+                currentPosts.map((post) => (post.$id === postId ? updatedPost : post))
+            );
+        } catch (error) {
+            console.log("Failed to toggle like", error);
+        }
+    }
    
   return (
     <div className='w-full py-8'>
@@ -26,7 +37,7 @@ function AllPosts() {
 
 
                     return isAuthor&&(<div key={post.$id} className='p-2 w-1/4'>
-                        <PostCard {...post} />
+                        <PostCard {...post} onLikeToggle={handleLikeToggle} />
                     </div>)
                 }
                     

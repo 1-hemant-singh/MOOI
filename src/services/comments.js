@@ -44,41 +44,21 @@ async function request(path, options = {}) {
     return data;
 }
 
-export class AuthService {
-    async createAccount({ email, password, name }) {
-        return request("/api/auth/register", {
+export const commentService = {
+    getComments(postId) {
+        return request(`/api/posts/${postId}/comments`);
+    },
+
+    createComment(postId, { content, parentId = null }) {
+        return request(`/api/posts/${postId}/comments`, {
             method: "POST",
-            body: JSON.stringify({ email, password, name }),
+            body: JSON.stringify({ content, parentId }),
         });
-    }
+    },
 
-    async login({ email, password }) {
-        return request("/api/auth/login", {
-            method: "POST",
-            body: JSON.stringify({ email, password }),
-        });
-    }
-
-    async getCurrentUser() {
-        try {
-            const response = await request("/api/auth/me");
-            return response.user;
-        } catch (error) {
-            if (error.status === 401 || error.status === 408) {
-                return null;
-            }
-
-            throw error;
-        }
-    }
-
-    async logout() {
-        await request("/api/auth/logout", {
+    toggleLike(commentId) {
+        return request(`/api/comments/${commentId}/like`, {
             method: "POST",
         });
-    }
-}
-
-const authService = new AuthService();
-
-export default authService;
+    },
+};

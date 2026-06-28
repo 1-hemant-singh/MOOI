@@ -1,152 +1,149 @@
-import conf from '../conf/conf.js';
-import { Client, ID, Databases, Storage, Query, Account } from "appwrite";
+import conf from "../conf/conf.js";
 
-
-
-
-
-
-export class Service{
-    client = new Client();
-    databases;
-    bucket;
-    
-    constructor(){
-        this.client
-        .setEndpoint(conf.appwriteUrl)
-        .setProject(conf.appwriteProjectId);
-        this.databases = new Databases(this.client);
-        this.bucket = new Storage(this.client);
-    }
-
-    async createPost({title, slug, content, featuredImage, status, userId}){
-        try {
-            console.log({ title, slug, content, featuredImage, status, userId });
-
-            return await this.databases.createDocument(
-            
-                conf.appwriteDatabaseId,
-                conf.appwriteCollectionId,
-                slug,
-                {
-                    title,
-                    content,
-                    featuredImage,
-                    status,
-                    userid: userId,
-                }
-            )
-        } catch (error) {
-            console.log("Appwrite serive :: createPost :: error", error);
-        }
-    }
-
-    async updatePost(slug, {title, content, featuredImage, status}){
-        try {
-            return await this.databases.updateDocument(
-                conf.appwriteDatabaseId,
-                conf.appwriteCollectionId,
-                slug,
-                {
-                    title,
-                    content,
-                    featuredImage,
-                    status,
-
-                }
-            )
-        } catch (error) {
-            console.log("Appwrite serive :: updatePost :: error", error);
-        }
-    }
-
-    async deletePost(slug){
-        try {
-            await this.databases.deleteDocument(
-                conf.appwriteDatabaseId,
-                conf.appwriteCollectionId,
-                slug
-            
-            )
-            return true
-        } catch (error) {
-            console.log("Appwrite serive :: deletePost :: error", error);
-            return false
-        }
-    }
-
-    async getPost(slug){
-        try {
-            return await this.databases.getDocument(
-                conf.appwriteDatabaseId,
-                conf.appwriteCollectionId,
-                slug
-            
-            )
-        } catch (error) {
-            console.log("Appwrite serive :: getPost :: error", error);
-            return false
-        }
-    }
-
-    async getPosts(queries = [Query.equal("status", "active")]){
-        try {
-            return await this.databases.listDocuments(
-                conf.appwriteDatabaseId,
-                conf.appwriteCollectionId,
-                queries,
-                
-
-            )
-        } catch (error) {
-            console.log("Appwrite serive :: getPosts :: error", error);
-            return false
-        }
-    }
-
-    // file upload service
-
-    async uploadFile(file){
-        try {
-            return await this.bucket.createFile(
-                conf.appwriteBucketId,
-                ID.unique(),
-                file
-            )
-        } catch (error) {
-            console.log("Appwrite serive :: uploadFile :: error", error);
-            return false
-        }
-    }
-
-    async deleteFile(fileId){
-        try {
-            await this.bucket.deleteFile(
-                conf.appwriteBucketId,
-                fileId
-            )
-            return true
-        } catch (error) {
-            console.log("Appwrite serive :: deleteFile :: error", error);
-            return false
-        }
-    }
-
-    
-
-    getFilePreview(fileId){
-
-        // console.log( this.bucket.getFilePreview(
-        //     conf.appwriteBucketId,
-        //     fileId
-        // ))
-        return this.bucket.getFilePreview(
-            conf.appwriteBucketId,
-            fileId
-        ).href +"&mode=admin";
+class ApiError extends Error {
+    constructor(message, status) {
+        super(message);
+        this.status = status;
     }
 }
 
+const REQUEST_TIMEOUT_MS = 8000;
 
-const service = new Service()
-export default service
+async function request(path, options = {}) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    let response;
+
+    try {
+        response = await fetch(`${conf.apiBaseUrl}${path}`, {
+            credentials: "include",
+            signal: controller.signal,
+            ...options,
+        });
+    } catch (error) {
+        if (error.name === "AbortError") {
+            throw new ApiError("Request timed out", 408);
+        }
+
+        throw error;
+    } finally {
+        window.clearTimeout(timeoutId);
+    }
+
+    const isJson = response.headers.get("content-type")?.includes("application/json");
+    const data = isJson ? await response.json() : null;
+
+    if (!response.ok) {
+        throw new ApiError(data?.message || "Request failed", response.status);
+    }
+
+    return data;
+}
+
+export class Service {
+    async createPost({ title, slug, content, featuredImage, status, userId }) {
+        return request("/api/posts", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                title,
+                slug,
+                content,
+                featuredImage,
+                status,
+                userId,
+            }),
+        });
+    }
+
+    async updatePost(slug, { title, content, featuredImage, status }) {
+        return request(`/api/posts/${slug}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                title,
+                content,
+                featuredImage,
+                status,
+            }),
+        });
+    }
+
+    async deletePost(slug) {
+        try {
+            await request(`/api/posts/${slug}`, {
+                method: "DELETE",
+            });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    async getPost(slug) {
+        try {
+            return await request(`/api/posts/${slug}`);
+        } catch {
+            return false;
+        }
+    }
+
+    async getPosts(queries = [{ type: "equal", field: "status", value: "active" }]) {
+        const searchParams = new URLSearchParams();
+
+        if (queries.length === 0) {
+            searchParams.set("scope", "all");
+        } else {
+            searchParams.set("status", "active");
+        }
+
+        try {
+            return await request(`/api/posts?${searchParams.toString()}`);
+        } catch {
+            return false;
+        }
+    }
+
+    async uploadFile(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            return await request("/api/files", {
+                method: "POST",
+                body: formData,
+            });
+        } catch {
+            return false;
+        }
+    }
+
+    async deleteFile(fileId) {
+        try {
+            await request(`/api/files/${fileId}`, {
+                method: "DELETE",
+            });
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    getFilePreview(fileId) {
+        return `${conf.apiBaseUrl}/api/files/${fileId}`;
+    }
+
+    async toggleLikePost(slug) {
+        return request(`/api/posts/${slug}/like`, {
+            method: "POST",
+        });
+    }
+}
+
+const service = new Service();
+export default service;

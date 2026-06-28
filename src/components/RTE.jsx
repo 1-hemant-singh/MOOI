@@ -1,6 +1,27 @@
 import React from 'react'
 import {Editor } from '@tinymce/tinymce-react';
 import {Controller } from 'react-hook-form';
+import "tinymce/tinymce";
+import "tinymce/models/dom/model";
+import "tinymce/themes/silver";
+import "tinymce/icons/default";
+import "tinymce/skins/ui/oxide/skin.min.css";
+import "tinymce/plugins/advlist";
+import "tinymce/plugins/autolink";
+import "tinymce/plugins/charmap";
+import "tinymce/plugins/code";
+import "tinymce/plugins/fullscreen";
+import "tinymce/plugins/help";
+import "tinymce/plugins/image";
+import "tinymce/plugins/insertdatetime";
+import "tinymce/plugins/link";
+import "tinymce/plugins/lists";
+import "tinymce/plugins/media";
+import "tinymce/plugins/preview";
+import "tinymce/plugins/searchreplace";
+import "tinymce/plugins/table";
+import "tinymce/plugins/visualblocks";
+import "tinymce/plugins/wordcount";
 
 
 export default function RTE({name, control, label, defaultValue =""}) {
@@ -13,7 +34,6 @@ export default function RTE({name, control, label, defaultValue =""}) {
     control={control}
     render={({field: {onChange}}) => (
         <Editor
-        apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
         initialValue={defaultValue}
         init={{
             initialValue: defaultValue,
@@ -53,4 +73,3 @@ export default function RTE({name, control, label, defaultValue =""}) {
      </div>
   )
 }
-

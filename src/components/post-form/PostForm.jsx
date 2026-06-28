@@ -71,7 +71,7 @@ export default function PostForm({ post }) {
     }, [watch, slugTransform, setValue]);
 
     return (
-        <form onSubmit={handleSubmit(submit)} className="flex flex-wrap">
+        <form onSubmit={handleSubmit(submit)} className="flex flex-wrap rounded-2xl border border-lavender-purple-800/60 bg-indigo-ink-900/80 p-5 shadow-xl shadow-dark-amethyst-950/40">
             <div className="w-2/3 px-2">
                 <Input
                     label="Title :"
@@ -100,7 +100,7 @@ export default function PostForm({ post }) {
                 />
                 {post && (
                     <div className="w-full mb-4">
-                         <img src={appwriteService.getFilePreview(post.featuredImage)+"&mode=admin"} alt={post.title} 
+                         <img src={appwriteService.getFilePreview(post.featuredImage)} alt={post.title}
                             className="rounded-lg"
                         />
                     </div>
@@ -111,7 +111,7 @@ export default function PostForm({ post }) {
                     className="mb-4"
                     {...register("status", { required: true })}
                 />
-                <Button type="submit" bgColor={post ? "bg-green-500" : undefined} className="w-full">
+                <Button type="submit" bgColor={post ? "bg-indigo-velvet-600" : undefined} className="w-full">
                     {post ? "Update" : "Submit"}
                 </Button>
             </div>
